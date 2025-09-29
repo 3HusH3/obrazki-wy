@@ -5,6 +5,17 @@ const app = express();
 
 app.use(express.static('public'));
 
+app.get('/random-image', (req, res) => {
+  const imagesDir = path.join(__dirname, 'public', 'images');
+  fs.readdir(imagesDir, (err, files) => {
+    if (err) return res.json({ error: 'Błąd odczytu obrazków' });
+    const images = files.filter(f => /\.(jpg|jpeg|png|gif)$/i.test(f));
+    if (images.length === 0) return res.json({ error: 'Brak obrazków' });
+    const randomImage = images[Math.floor(Math.random() * images.length)];
+    res.json({ image: `/images/${randomImage}` });
+  });
+});
+
 app.get('/', (req, res) => {
   const imagesDir = path.join(__dirname, 'public', 'images');
   fs.readdir(imagesDir, (err, files) => {
@@ -22,8 +33,19 @@ app.get('/', (req, res) => {
       </head>
       <body>
         <div class="container">
-          <img src="/images/${randomImage}" alt="Losowy obrazek">
+          <img id="main-image" src="/images/${randomImage}" alt="Losowy obrazek">
+          <br>
+          <button id="change-btn">Zmień obrazek</button>
         </div>
+        <script>
+          document.getElementById('change-btn').onclick = function() {
+            fetch('/random-image').then(r => r.json()).then(data => {
+              if(data.image) {
+                document.getElementById('main-image').src = data.image;
+              }
+            });
+          };
+        </script>
       </body>
       </html>
     `);
